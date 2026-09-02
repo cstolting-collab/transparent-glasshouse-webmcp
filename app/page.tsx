@@ -2,20 +2,33 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowDown,
-  ArrowUp,
+  ArrowLeft,
+  ArrowRight,
   Bot,
   Check,
   CirclePlus,
-  CloudRain,
-  Eye,
-  GlassWater,
+  CloudSun,
+  Flower2,
+  FolderOpen,
+  Globe2,
+  GripHorizontal,
+  Home,
+  Leaf,
+  LockKeyhole,
+  MessageCircle,
+  MoreHorizontal,
+  Move,
+  Music2,
+  PenLine,
+  Plus,
   RotateCcw,
   Route,
   Search,
-  Sparkles,
-  SunMedium,
+  Settings2,
+  Star,
   UserRound,
+  UsersRound,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,87 +39,146 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 
 const BLOOM_CARDS = [
   {
     id: "redwood-roads",
     number: "I",
-    chapter: "Recognition",
     title: "Redwood Roads",
+    chapter: "Recognition",
     line: "Every branch remembers where a road once ran.",
     story: "A traveling city crosses the high canopy slowly enough for neighbors to recognize one another.",
     prompt: "Build a route about belonging, motion, and being welcomed home.",
     mood: "warm passage",
     tags: ["roads", "home", "canopy"],
-    accent: "#cf694a",
-    position: "center 52%",
+    accent: "#ff8a5b",
   },
   {
     id: "saturn-house",
     number: "II",
-    chapter: "Slow Time",
     title: "Saturn House",
+    chapter: "Slow Time",
     line: "Where time moves slow, the constellations write back.",
     story: "A glass room holds the distance long enough for wonder to become handwriting.",
     prompt: "Build a route that slows the room and leaves space for wonder.",
     mood: "luminous pause",
     tags: ["time", "stars", "stillness"],
-    accent: "#b68a25",
-    position: "center 16%",
+    accent: "#ffd873",
   },
   {
     id: "glass-beach",
     number: "III",
-    chapter: "Found Light",
     title: "Glass Beach",
+    chapter: "Found Light",
     line: "The tide returns every broken color as a small lantern.",
     story: "A shoreline archive where weathered fragments become a map of light instead of evidence of damage.",
     prompt: "Build a route about transformation, tide, and recovered color.",
     mood: "bright recovery",
     tags: ["tide", "glass", "color"],
-    accent: "#2d8c89",
-    position: "42% 66%",
+    accent: "#64e4dd",
   },
   {
     id: "small-mercies",
     number: "IV",
-    chapter: "Tender Evidence",
     title: "Museum of Small Mercies",
+    chapter: "Tender Evidence",
     line: "The smallest kindnesses are catalogued at full scale.",
     story: "An intimate collection of gestures that usually disappear before anyone thinks to name them.",
     prompt: "Build a route that notices care without making it perform.",
     mood: "quiet care",
     tags: ["care", "memory", "gesture"],
-    accent: "#a85d79",
-    position: "16% 78%",
+    accent: "#ff9dc9",
   },
   {
     id: "squirrels-without-trees",
     number: "V",
-    chapter: "Memory",
     title: "Squirrels Without Trees",
+    chapter: "Memory",
     line: "Memory is not absence—just distance from where something stood.",
     story: "A vanished pine leaves a missing road in the air, and a traveler pauses where the path should continue.",
     prompt: "Build a route about lost paths, memory, and making a new way.",
     mood: "gentle melancholy",
     tags: ["trees", "distance", "paths"],
-    accent: "#6d8238",
-    position: "80% 57%",
+    accent: "#b9f28d",
   },
 ] as const;
 
 type CardId = (typeof BLOOM_CARDS)[number]["id"];
-type GlassMode = "clear" | "soft" | "evening" | "luminous";
+type GlassMode = "crystal" | "soft" | "evening" | "luminous";
 type Weather = "sunbreak" | "mist" | "rain" | "starlight";
-type Activity = { id: number; actor: "You" | "Agent"; message: string };
+type Actor = "You" | "Agent";
+type Activity = { id: number; actor: Actor; message: string };
+type PanelId = "idea" | "notes" | "media" | "weather" | "cards" | "route" | "activity";
+type Offset = { x: number; y: number };
 
-const GLASS_MODES: GlassMode[] = ["clear", "soft", "evening", "luminous"];
+const GLASS_MODES: GlassMode[] = ["crystal", "soft", "evening", "luminous"];
 const WEATHER: Weather[] = ["sunbreak", "mist", "rain", "starlight"];
 const CARD_IDS = BLOOM_CARDS.map((card) => card.id);
 const CARD_ID_SCHEMA = { type: "string", enum: CARD_IDS };
+const PANEL_IDS: PanelId[] = ["idea", "notes", "media", "weather", "cards", "route", "activity"];
+const ZERO_OFFSETS = Object.fromEntries(PANEL_IDS.map((id) => [id, { x: 0, y: 0 }])) as Record<PanelId, Offset>;
+const DEFAULT_VISIBLE: Record<PanelId, boolean> = {
+  idea: true,
+  notes: true,
+  media: true,
+  weather: true,
+  cards: true,
+  route: true,
+  activity: false,
+};
 
 function cardById(id: string) {
   return BLOOM_CARDS.find((card) => card.id === id);
+}
+
+function PanelFrame({
+  id,
+  title,
+  className,
+  visible,
+  offset,
+  z,
+  onFront,
+  onStartDrag,
+  onMoveKey,
+  onClose,
+  children,
+}: {
+  id: PanelId;
+  title: string;
+  className: string;
+  visible: boolean;
+  offset: Offset;
+  z: number;
+  onFront: (id: PanelId) => void;
+  onStartDrag: (id: PanelId, event: React.PointerEvent<HTMLElement>) => void;
+  onMoveKey: (id: PanelId, event: React.KeyboardEvent<HTMLElement>) => void;
+  onClose: (id: PanelId) => void;
+  children: React.ReactNode;
+}) {
+  if (!visible) return null;
+  return (
+    <section
+      className={`spatial-panel ${className}`}
+      style={{ transform: `translate3d(${offset.x}px, ${offset.y}px, 0)`, zIndex: z }}
+      onPointerDown={() => onFront(id)}
+      aria-label={title}
+    >
+      <header
+        className="panel-handle"
+        onPointerDown={(event) => onStartDrag(id, event)}
+        onKeyDown={(event) => onMoveKey(id, event)}
+        tabIndex={0}
+        role="toolbar"
+        aria-label={`Move ${title}. Use arrow keys or drag.`}
+      >
+        <span><GripHorizontal />{title}</span>
+        <Button variant="ghost" size="icon-xs" onPointerDown={(event) => event.stopPropagation()} onClick={() => onClose(id)} aria-label={`Close ${title}`}><X /></Button>
+      </header>
+      {children}
+    </section>
+  );
 }
 
 export default function Home() {
@@ -114,55 +186,157 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState<CardId>("saturn-house");
   const [query, setQuery] = useState("");
   const [highlights, setHighlights] = useState<CardId[]>([]);
-  const [glassMode, setGlassMode] = useState<GlassMode>("clear");
+  const [glassMode, setGlassMode] = useState<GlassMode>("crystal");
+  const [glassOpacity, setGlassOpacity] = useState(16);
   const [weather, setWeather] = useState<Weather>("sunbreak");
   const [toolState, setToolState] = useState<"checking" | "ready" | "preview" | "error">("checking");
-  const [activity, setActivity] = useState<Activity[]>([
-    { id: 1, actor: "You", message: "Entered the clear room." },
-  ]);
+  const [activity, setActivity] = useState<Activity[]>([{ id: 1, actor: "You", message: "Entered the Glasshouse." }]);
+  const [notes, setNotes] = useState(["Bloom idea", "Layering, not dividing", "Glass is gentler", "Light carries meaning"]);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [offsets, setOffsets] = useState<Record<PanelId, Offset>>(ZERO_OFFSETS);
+  const [visible, setVisible] = useState<Record<PanelId, boolean>>(DEFAULT_VISIBLE);
+  const [zOrder, setZOrder] = useState<Record<PanelId, number>>(() => Object.fromEntries(PANEL_IDS.map((id, index) => [id, 10 + index])) as Record<PanelId, number>);
+  const [roomHydrated, setRoomHydrated] = useState(false);
   const activityId = useRef(1);
+  const zCounter = useRef(30);
+  const dragRef = useRef<{ id: PanelId; pointerX: number; pointerY: number; origin: Offset } | null>(null);
 
   const selectedCard = cardById(selectedId) ?? BLOOM_CARDS[0];
   const routeCards = useMemo(() => route.map((id) => cardById(id)).filter(Boolean), [route]);
 
-  const addActivity = (actor: Activity["actor"], message: string) => {
+  const addActivity = (actor: Actor, message: string) => {
     activityId.current += 1;
-    setActivity((current) => [{ id: activityId.current, actor, message }, ...current].slice(0, 5));
+    setActivity((current) => [{ id: activityId.current, actor, message }, ...current].slice(0, 7));
   };
 
-  const openCard = (id: CardId, actor: Activity["actor"] = "You") => {
+  const bringToFront = (id: PanelId) => {
+    zCounter.current += 1;
+    setZOrder((current) => ({ ...current, [id]: zCounter.current }));
+  };
+
+  const revealPanel = (id: PanelId) => {
+    setVisible((current) => ({ ...current, [id]: true }));
+    bringToFront(id);
+  };
+
+  const togglePanel = (id: PanelId) => {
+    const next = !visible[id];
+    setVisible((current) => ({ ...current, [id]: next }));
+    if (next) bringToFront(id);
+  };
+
+  const resetRoom = () => {
+    setOffsets(ZERO_OFFSETS);
+    setVisible(DEFAULT_VISIBLE);
+    setZOrder(Object.fromEntries(PANEL_IDS.map((id, index) => [id, 10 + index])) as Record<PanelId, number>);
+    addActivity("You", "Returned every panel to its place.");
+  };
+
+  const startDrag = (id: PanelId, event: React.PointerEvent<HTMLElement>) => {
+    if (event.button !== 0) return;
+    event.stopPropagation();
+    event.preventDefault();
+    bringToFront(id);
+    dragRef.current = { id, pointerX: event.clientX, pointerY: event.clientY, origin: offsets[id] };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const movePanelWithKeys = (id: PanelId, event: React.KeyboardEvent<HTMLElement>) => {
+    const delta = event.shiftKey ? 24 : 8;
+    const movement: Record<string, Offset> = {
+      ArrowLeft: { x: -delta, y: 0 },
+      ArrowRight: { x: delta, y: 0 },
+      ArrowUp: { x: 0, y: -delta },
+      ArrowDown: { x: 0, y: delta },
+    };
+    const next = movement[event.key];
+    if (!next) return;
+    event.preventDefault();
+    bringToFront(id);
+    setOffsets((current) => ({ ...current, [id]: { x: current[id].x + next.x, y: current[id].y + next.y } }));
+  };
+
+  useEffect(() => {
+    const move = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const x = Math.max(-720, Math.min(720, drag.origin.x + event.clientX - drag.pointerX));
+      const y = Math.max(-520, Math.min(520, drag.origin.y + event.clientY - drag.pointerY));
+      setOffsets((current) => ({ ...current, [drag.id]: { x, y } }));
+    };
+    const stop = () => { dragRef.current = null; };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("transparent-glasshouse-room");
+      if (saved) {
+        const value = JSON.parse(saved) as {
+          offsets?: Partial<Record<PanelId, { x?: unknown; y?: unknown }>>;
+          visible?: Partial<Record<PanelId, unknown>>;
+          glassOpacity?: unknown;
+        };
+        const safeOffsets = { ...ZERO_OFFSETS };
+        const safeVisible = { ...DEFAULT_VISIBLE };
+        for (const id of PANEL_IDS) {
+          const offset = value.offsets?.[id];
+          if (offset && typeof offset.x === "number" && Number.isFinite(offset.x) && typeof offset.y === "number" && Number.isFinite(offset.y)) {
+            safeOffsets[id] = {
+              x: Math.max(-720, Math.min(720, offset.x)),
+              y: Math.max(-520, Math.min(520, offset.y)),
+            };
+          }
+          if (typeof value.visible?.[id] === "boolean") safeVisible[id] = value.visible[id];
+        }
+        setOffsets(safeOffsets);
+        setVisible(safeVisible);
+        if (typeof value.glassOpacity === "number" && Number.isFinite(value.glassOpacity)) {
+          setGlassOpacity(Math.max(8, Math.min(36, value.glassOpacity)));
+        }
+      }
+    } catch {
+      window.localStorage.removeItem("transparent-glasshouse-room");
+    } finally {
+      setRoomHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!roomHydrated) return;
+    window.localStorage.setItem("transparent-glasshouse-room", JSON.stringify({ offsets, visible, glassOpacity }));
+  }, [roomHydrated, offsets, visible, glassOpacity]);
+
+  const openCard = (id: CardId, actor: Actor = "You") => {
     const card = cardById(id);
     if (!card) return;
     setSelectedId(id);
+    revealPanel("idea");
     addActivity(actor, `Opened ${card.title}.`);
-    requestAnimationFrame(() => document.getElementById("reading-room")?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
   };
 
-  const addToRoute = (id: CardId, actor: Activity["actor"] = "You") => {
+  const addToRoute = (id: CardId, actor: Actor = "You") => {
     const card = cardById(id);
     if (!card || route.includes(id) || route.length >= 5) return;
     setRoute((current) => [...current, id]);
-    addActivity(actor, `Placed ${card.title} on the journey.`);
+    revealPanel("route");
+    addActivity(actor, `Placed ${card.title} on the Wonder Route.`);
   };
 
   const removeFromRoute = (id: CardId) => {
     const card = cardById(id);
     setRoute((current) => current.filter((item) => item !== id));
-    if (card) addActivity("You", `Lifted ${card.title} from the journey.`);
+    if (card) addActivity("You", `Lifted ${card.title} from the Wonder Route.`);
   };
 
-  const moveRouteCard = (index: number, direction: -1 | 1) => {
-    setRoute((current) => {
-      const target = index + direction;
-      if (target < 0 || target >= current.length) return current;
-      const next = [...current];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-    addActivity("You", "Reordered the Wonder Route.");
-  };
-
-  const searchCards = (value: string, actor: Activity["actor"] = "You") => {
+  const searchCards = (value: string, actor: Actor = "You") => {
     const normalized = value.trim().toLowerCase();
     setQuery(value);
     if (!normalized) {
@@ -173,9 +347,18 @@ export default function Home() {
       [card.title, card.chapter, card.line, card.story, card.mood, ...card.tags].join(" ").toLowerCase().includes(normalized),
     ).map((card) => card.id);
     setHighlights(matches);
-    if (matches[0]) setSelectedId(matches[0]);
-    addActivity(actor, `Looked through the collection for “${value.trim()}”.`);
+    if (matches[0]) openCard(matches[0], actor);
+    revealPanel("cards");
+    if (!matches[0]) addActivity(actor, `Found no card for “${value.trim()}”.`);
     return matches;
+  };
+
+  const addNote = () => {
+    const value = noteDraft.trim();
+    if (!value) return;
+    setNotes((current) => [...current, value].slice(-7));
+    setNoteDraft("");
+    addActivity("You", "Added a thought to Notes.");
   };
 
   useEffect(() => {
@@ -184,92 +367,72 @@ export default function Home() {
       queueMicrotask(() => setToolState("preview"));
       return;
     }
-
     const controller = new AbortController();
     const register = async () => {
       try {
         await Promise.all([
           modelContext.registerTool({
             name: "list_bloom_cards",
-            description: "List the public Bloom Cards in the Transparent Glasshouse with their themes and moods.",
+            description: "List the public Bloom Cards in the spatial Glasshouse.",
             inputSchema: { type: "object", properties: {}, additionalProperties: false },
             annotations: { readOnlyHint: true },
-            execute: async () => ({ cards: BLOOM_CARDS.map((card) => ({ id: card.id, title: card.title, mood: card.mood })) }),
+            execute: async () => ({ cards: BLOOM_CARDS.map(({ id, title, mood }) => ({ id, title, mood })) }),
           }, { signal: controller.signal }),
           modelContext.registerTool({
             name: "find_bloom_cards",
-            description: "Search the Bloom collection by idea, mood, place, or story detail and highlight matches in the shared room.",
-            inputSchema: {
-              type: "object",
-              properties: { query: { type: "string", description: "Theme or phrase to find.", minLength: 2, maxLength: 80 } },
-              required: ["query"],
-              additionalProperties: false,
-            },
-            annotations: { readOnlyHint: true },
+            description: "Search the Bloom collection and reveal matching cards in the shared space.",
+            inputSchema: { type: "object", properties: { query: { type: "string", minLength: 2, maxLength: 80 } }, required: ["query"], additionalProperties: false },
+            annotations: { readOnlyHint: false },
             execute: async (input) => {
-              const { query } = input as { query: string };
-              const matches = searchCards(query, "Agent");
-              return matches.length
-                ? { highlighted: matches.map((id) => cardById(id)?.title) }
-                : { message: `No Bloom Cards matched “${query}”.`, highlighted: [] };
+              const matches = searchCards((input as { query: string }).query, "Agent");
+              return { highlighted: matches.map((id) => cardById(id)?.title) };
             },
           }, { signal: controller.signal }),
           modelContext.registerTool({
             name: "open_bloom_card",
-            description: "Open one Bloom Card in the shared reading room.",
-            inputSchema: {
-              type: "object",
-              properties: { card_id: { ...CARD_ID_SCHEMA, description: "Bloom Card to open." } },
-              required: ["card_id"],
-              additionalProperties: false,
-            },
-            annotations: { readOnlyHint: true },
+            description: "Bring one Bloom Card into the main glass window.",
+            inputSchema: { type: "object", properties: { card_id: CARD_ID_SCHEMA }, required: ["card_id"], additionalProperties: false },
+            annotations: { readOnlyHint: false },
             execute: async (input) => {
-              const { card_id } = input as { card_id: CardId };
-              const card = cardById(card_id);
+              const id = (input as { card_id: CardId }).card_id;
+              const card = cardById(id);
               if (!card) return { error: "That Bloom Card does not exist." };
-              openCard(card_id, "Agent");
+              openCard(id, "Agent");
               return { opened: card.title, line: card.line };
             },
           }, { signal: controller.signal }),
           modelContext.registerTool({
             name: "compose_wonder_route",
-            description: "Compose an ordered Wonder Route from up to five Bloom Cards and show it immediately in the shared room.",
+            description: "Compose an ordered Wonder Route from up to five Bloom Cards.",
             inputSchema: {
               type: "object",
-              properties: {
-                card_ids: { type: "array", items: CARD_ID_SCHEMA, minItems: 1, maxItems: 5, uniqueItems: true },
-                reason: { type: "string", description: "Short reason for this route.", maxLength: 160 },
-              },
+              properties: { card_ids: { type: "array", items: CARD_ID_SCHEMA, minItems: 1, maxItems: 5, uniqueItems: true }, reason: { type: "string", maxLength: 160 } },
               required: ["card_ids"],
               additionalProperties: false,
             },
             annotations: { readOnlyHint: false },
             execute: async (input) => {
               const { card_ids, reason } = input as { card_ids: CardId[]; reason?: string };
-              const validIds = card_ids.filter((id, index) => cardById(id) && card_ids.indexOf(id) === index).slice(0, 5);
-              if (!validIds.length) return { error: "No valid Bloom Cards were provided." };
-              setRoute(validIds);
-              setHighlights(validIds);
-              setSelectedId(validIds[0]);
-              addActivity("Agent", `Composed a ${validIds.length}-stop Wonder Route${reason ? `: ${reason}` : "."}`);
-              return { route: validIds.map((id) => cardById(id)?.title), reason: reason ?? null };
+              const valid = card_ids.filter((id, index) => cardById(id) && card_ids.indexOf(id) === index).slice(0, 5);
+              if (!valid.length) return { error: "No valid Bloom Cards were provided." };
+              setRoute(valid);
+              setHighlights(valid);
+              openCard(valid[0], "Agent");
+              revealPanel("route");
+              addActivity("Agent", `Composed a ${valid.length}-stop route${reason ? `: ${reason}` : "."}`);
+              return { route: valid.map((id) => cardById(id)?.title), reason: reason ?? null };
             },
           }, { signal: controller.signal }),
           modelContext.registerTool({
             name: "set_glass_mode",
-            description: "Set the shared glass treatment to clear, soft, evening, or luminous.",
-            inputSchema: {
-              type: "object",
-              properties: { mode: { type: "string", enum: GLASS_MODES, description: "Glass treatment." } },
-              required: ["mode"],
-              additionalProperties: false,
-            },
+            description: "Set the shared glass treatment to crystal, soft, evening, or luminous.",
+            inputSchema: { type: "object", properties: { mode: { type: "string", enum: GLASS_MODES } }, required: ["mode"], additionalProperties: false },
             annotations: { readOnlyHint: false },
             execute: async (input) => {
-              const { mode } = input as { mode: GlassMode };
+              const mode = (input as { mode: GlassMode }).mode;
               if (!GLASS_MODES.includes(mode)) return { error: "Unknown glass treatment." };
               setGlassMode(mode);
+              revealPanel("weather");
               addActivity("Agent", `Changed the glass to ${mode}.`);
               return { mode };
             },
@@ -277,19 +440,15 @@ export default function Home() {
           modelContext.registerTool({
             name: "set_glasshouse_weather",
             description: "Change the visible Glasshouse weather to sunbreak, mist, rain, or starlight.",
-            inputSchema: {
-              type: "object",
-              properties: { weather: { type: "string", enum: WEATHER, description: "Weather in the shared room." } },
-              required: ["weather"],
-              additionalProperties: false,
-            },
+            inputSchema: { type: "object", properties: { weather: { type: "string", enum: WEATHER } }, required: ["weather"], additionalProperties: false },
             annotations: { readOnlyHint: false },
             execute: async (input) => {
-              const nextWeather = (input as { weather: Weather }).weather;
-              if (!WEATHER.includes(nextWeather)) return { error: "Unknown weather." };
-              setWeather(nextWeather);
-              addActivity("Agent", `Brought in ${nextWeather}.`);
-              return { weather: nextWeather };
+              const next = (input as { weather: Weather }).weather;
+              if (!WEATHER.includes(next)) return { error: "Unknown weather." };
+              setWeather(next);
+              revealPanel("weather");
+              addActivity("Agent", `Brought in ${next}.`);
+              return { weather: next };
             },
           }, { signal: controller.signal }),
         ]);
@@ -301,188 +460,133 @@ export default function Home() {
         }
       }
     };
-
     void register();
     return () => controller.abort();
-    // WebMCP handlers intentionally register once and update the same React surface as human controls.
+    // Tool handlers intentionally share the same state as the visible room.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const panelProps = (id: PanelId, title: string, className: string) => ({
+    id,
+    title,
+    className,
+    visible: visible[id],
+    offset: offsets[id],
+    z: zOrder[id],
+    onFront: bringToFront,
+    onStartDrag: startDrag,
+    onMoveKey: movePanelWithKeys,
+    onClose: (panelId: PanelId) => setVisible((current) => ({ ...current, [panelId]: false })),
+  });
+
   return (
-    <main className={`glasshouse glass-${glassMode} weather-${weather}`}>
-      <div className="world" aria-hidden="true" />
-      <div className="weather-layer" aria-hidden="true" />
-      <div className="glasshouse-shell">
-        <header className="masthead clear-panel" id="top">
-          <a className="brand" href="#top" aria-label="Transparent Glasshouse home">
-            <span className="brand-seal"><GlassWater /></span>
-            <span>
-              <small>The public constellation</small>
-              <strong>Transparent Glasshouse</strong>
-            </span>
-          </a>
-          <nav aria-label="Glasshouse sections">
-            <a href="#collection">Bloom Cards</a>
-            <a href="#reading-room">Reading Room</a>
-            <a href="#journey">Wonder Route</a>
-          </nav>
-          <div className={`tool-status status-${toolState}`} aria-live="polite">
-            <span />
-            {toolState === "ready" && "Six agent tools awake"}
-            {toolState === "preview" && "Human room open · agent tools available in WebMCP"}
-            {toolState === "checking" && "Opening the room…"}
-            {toolState === "error" && "Refresh to wake agent tools"}
+    <main className={`spatial-glasshouse glass-${glassMode} weather-${weather}`} style={{ "--glass-alpha": glassOpacity / 100 } as React.CSSProperties}>
+      <div className="living-world" aria-hidden="true" />
+      <div className="weather-space" aria-hidden="true" />
+      <p className="world-motto">Not pages on a screen. <span>Ideas in space.</span></p>
+
+      <aside className="side-dock glass-dock" aria-label="Glasshouse rooms">
+        <Button variant="ghost" size="icon" onClick={resetRoom} title="Home · reset room" aria-label="Reset room"><Home /></Button>
+        <Button variant="ghost" size="icon" onClick={() => togglePanel("weather")} className={visible.weather ? "active" : ""} title="Weather" aria-label="Toggle weather"><Globe2 /></Button>
+        <Button variant="ghost" size="icon" onClick={() => togglePanel("cards")} className={visible.cards ? "active" : ""} title="Bloom Cards" aria-label="Toggle Bloom Cards"><Flower2 /></Button>
+        <Button variant="ghost" size="icon" onClick={() => togglePanel("media")} className={visible.media ? "active" : ""} title="Motion and sound" aria-label="Toggle motion and sound"><Music2 /></Button>
+        <Button variant="ghost" size="icon" onClick={() => togglePanel("activity")} className={visible.activity ? "active" : ""} title="Human and agent activity" aria-label="Toggle activity"><MessageCircle /></Button>
+        <span />
+        <Button variant="ghost" size="icon" onClick={() => revealPanel("notes")} title="Add a thought" aria-label="Open notes"><Plus /></Button>
+      </aside>
+
+      <div className="spatial-canvas">
+        <PanelFrame {...panelProps("idea", "Bloom window", "idea-panel") }>
+          <div className="browser-bar">
+            <div><ArrowLeft /><ArrowRight /></div>
+            <span><LockKeyhole /> bloom://ideas/{selectedCard.id}</span>
+            <div><Star /><MoreHorizontal /></div>
           </div>
-        </header>
-
-        <section className="welcome clear-panel" aria-labelledby="welcome-title">
-          <div className="welcome-copy">
-            <p className="folio">The Glasshouse Constellation · A living card room</p>
-            <h1 id="welcome-title">A clear room<br />for finding wonder.</h1>
-            <p className="welcome-note">Browse a card with your own hands—or let an agent help find a path. You remain together in the same visible room.</p>
-          </div>
-          <div className="room-controls" aria-label="Room controls">
-            <label>
-              <span><CloudRain /> Weather</span>
-              <Select value={weather} onValueChange={(value) => {
-                const next = value as Weather;
-                setWeather(next);
-                addActivity("You", `Brought in ${next}.`);
-              }}>
-                <SelectTrigger className="weather-select" aria-label="Choose Glasshouse weather"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {WEATHER.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </label>
-            <label>
-              <span><Eye /> Glass</span>
-              <Select value={glassMode} onValueChange={(value) => {
-                const next = value as GlassMode;
-                setGlassMode(next);
-                addActivity("You", `Changed the glass to ${next}.`);
-              }}>
-                <SelectTrigger className="weather-select" aria-label="Choose glass treatment"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {GLASS_MODES.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </label>
-            <p><SunMedium /> Today in the canopy<br /><strong>{weather === "sunbreak" ? "Rain clearing · warm light returning" : weather === "mist" ? "Low cloud · roads appearing slowly" : weather === "rain" ? "Soft rain · lanterns lit" : "Clear night · Saturn visible"}</strong></p>
-          </div>
-        </section>
-
-        <div className="room-grid">
-          <section className="collection clear-panel" id="collection" aria-labelledby="collection-title">
-            <div className="section-title">
-              <div>
-                <p className="folio">Collection No. 01</p>
-                <h2 id="collection-title">Bloom Cards</h2>
-              </div>
-              <label className="search-field">
-                <Search aria-hidden="true" />
-                <span className="sr-only">Search Bloom Cards</span>
-                <input
-                  value={query}
-                  onChange={(event) => {
-                    setQuery(event.target.value);
-                    const normalized = event.target.value.trim().toLowerCase();
-                    setHighlights(normalized ? BLOOM_CARDS.filter((card) => [card.title, card.story, card.mood, ...card.tags].join(" ").toLowerCase().includes(normalized)).map((card) => card.id) : []);
-                  }}
-                  onKeyDown={(event) => { if (event.key === "Enter") searchCards(query); }}
-                  placeholder="Find memory, home, light…"
-                />
-              </label>
-            </div>
-
-            <div className="constellation-rail" aria-hidden="true"><span /><span /><span /><span /><span /></div>
-            <div className="card-gallery">
-              {BLOOM_CARDS.map((card, index) => {
-                const isSelected = selectedId === card.id;
-                const isHighlighted = highlights.includes(card.id);
-                const isOnRoute = route.includes(card.id);
-                return (
-                  <article
-                    id={`card-${card.id}`}
-                    key={card.id}
-                    className={`bloom-card card-${index + 1}${isSelected ? " selected" : ""}${isHighlighted ? " highlighted" : ""}`}
-                    style={{ "--card-accent": card.accent } as React.CSSProperties}
-                  >
-                    <div className="card-edge" />
-                    <header><span>Bloom Card</span><span>{card.number}</span></header>
-                    <button className="card-portrait" onClick={() => openCard(card.id)} aria-label={`Open ${card.title}`} style={{ backgroundPosition: card.position }}>
-                      <span>{card.chapter}</span>
-                    </button>
-                    <button className="card-reading" onClick={() => openCard(card.id)}>
-                      <small>The Glasshouse Constellation</small>
-                      <strong>{card.title}</strong>
-                      <em>{card.line}</em>
-                    </button>
-                    <footer>
-                      <span>{card.mood}</span>
-                      <Button variant="ghost" size="sm" onClick={() => isOnRoute ? removeFromRoute(card.id) : addToRoute(card.id)} aria-label={`${isOnRoute ? "Remove" : "Add"} ${card.title} ${isOnRoute ? "from" : "to"} route`}>
-                        {isOnRoute ? <Check /> : <CirclePlus />}{isOnRoute ? "Placed" : "Place"}
-                      </Button>
-                    </footer>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-
-          <aside className="journey clear-panel" id="journey" aria-labelledby="journey-title">
-            <div className="section-title compact">
-              <div><p className="folio">Your path</p><h2 id="journey-title">Wonder Route</h2></div>
-              {route.length > 0 && <Button variant="ghost" size="icon-sm" onClick={() => { setRoute([]); addActivity("You", "Cleared the Wonder Route."); }} aria-label="Clear route"><RotateCcw /></Button>}
-            </div>
-            {routeCards.length === 0 ? (
-              <div className="empty-journey"><Route /><strong>Begin anywhere.</strong><p>Place a card here, or ask an agent for a route about what is on your mind.</p></div>
-            ) : (
-              <ol className="journey-list">
-                {routeCards.map((card, index) => card && (
-                  <li key={card.id} style={{ "--card-accent": card.accent } as React.CSSProperties}>
-                    <span className="route-number">{String(index + 1).padStart(2, "0")}</span>
-                    <button onClick={() => openCard(card.id)}><strong>{card.title}</strong><small>{card.chapter}</small></button>
-                    <div>
-                      <Button variant="ghost" size="icon-xs" disabled={index === 0} onClick={() => moveRouteCard(index, -1)} aria-label={`Move ${card.title} up`}><ArrowUp /></Button>
-                      <Button variant="ghost" size="icon-xs" disabled={index === route.length - 1} onClick={() => moveRouteCard(index, 1)} aria-label={`Move ${card.title} down`}><ArrowDown /></Button>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-            <p className="route-count">{route.length} of 5 cards · held only for this visit</p>
-          </aside>
-        </div>
-
-        <section className="reading-room clear-panel" id="reading-room" aria-labelledby="reading-title" style={{ "--card-accent": selectedCard.accent } as React.CSSProperties}>
-          <div className="reading-image" style={{ backgroundPosition: selectedCard.position }}><span>{selectedCard.number}</span></div>
-          <div className="reading-copy">
-            <p className="folio">Open card · {selectedCard.chapter}</p>
-            <h2 id="reading-title">{selectedCard.title}</h2>
+          <div className="idea-content" style={{ "--card-accent": selectedCard.accent } as React.CSSProperties}>
+            <p>{selectedCard.chapter} · Bloom {selectedCard.number}</p>
+            <h1>{selectedCard.title}</h1>
             <blockquote>{selectedCard.line}</blockquote>
-            <p>{selectedCard.story}</p>
-            <div className="prompt"><Sparkles /><span><small>A possible path</small>{selectedCard.prompt}</span></div>
+            <div className="idea-story"><span>{selectedCard.story}</span><em>{selectedCard.prompt}</em></div>
+            <div className="idea-actions">
+              <Button variant="ghost" onClick={() => route.includes(selectedCard.id) ? removeFromRoute(selectedCard.id) : addToRoute(selectedCard.id)}>
+                {route.includes(selectedCard.id) ? <Check /> : <CirclePlus />}{route.includes(selectedCard.id) ? "On the route" : "Place on route"}
+              </Button>
+              <button onClick={() => revealPanel("cards")}>Explore the constellation <ArrowRight /></button>
+            </div>
           </div>
-          <Button className="reading-place" variant="ghost" onClick={() => route.includes(selectedCard.id) ? removeFromRoute(selectedCard.id) : addToRoute(selectedCard.id)}>
-            {route.includes(selectedCard.id) ? <Check /> : <CirclePlus />}{route.includes(selectedCard.id) ? "On the route" : "Place on route"}
-          </Button>
-        </section>
+          <form className="idea-search" onSubmit={(event) => { event.preventDefault(); searchCards(query); }}>
+            <Search />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ask the collection about memory, home, light…" aria-label="Search Bloom Cards" />
+            <Button variant="ghost" size="sm" type="submit">Find</Button>
+          </form>
+        </PanelFrame>
 
-        <section className="shared-ledger clear-panel" aria-labelledby="ledger-title">
-          <div><p className="folio">One room · two kinds of attention</p><h2 id="ledger-title">Shared ledger</h2></div>
-          <ul aria-live="polite">
-            {activity.map((item) => (
-              <li key={item.id}><span className={`actor actor-${item.actor.toLowerCase()}`}>{item.actor === "Agent" ? <Bot /> : <UserRound />}</span><p><strong>{item.actor}</strong>{item.message}</p></li>
-            ))}
-          </ul>
-        </section>
+        <PanelFrame {...panelProps("notes", "Notes", "notes-panel") }>
+          <ul>{notes.map((note, index) => <li key={`${note}-${index}`}>{note}</li>)}</ul>
+          <div className="note-entry">
+            <input value={noteDraft} onChange={(event) => setNoteDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addNote(); }} placeholder="Add thought…" aria-label="New note" />
+            <Button variant="ghost" size="icon-sm" onClick={addNote} aria-label="Add note"><Plus /></Button>
+          </div>
+        </PanelFrame>
 
-        <footer className="site-footer clear-panel">
-          <p><Sparkles /> An independent WebMCP experiment by Cherie Stolting.</p>
-          <p>Six tools · no account · no upload · session-only state</p>
-        </footer>
+        <PanelFrame {...panelProps("media", "Motion study", "media-panel") }>
+          <div className="media-heading"><span><Music2 /></span><div><strong>The Transparent Web</strong><small>Ideas in Space · 00:10</small></div></div>
+          <video controls playsInline preload="metadata" src="/transparent-web-motion-study.mp4">Your browser does not support the motion study.</video>
+        </PanelFrame>
+
+        <PanelFrame {...panelProps("weather", "Room weather", "weather-panel") }>
+          <div className="weather-reading"><CloudSun /><strong>{weather === "starlight" ? "54°" : weather === "rain" ? "63°" : weather === "mist" ? "66°" : "72°"}</strong><span>{weather}<small>Glasshouse atmosphere</small></span></div>
+          <div className="weather-controls">
+            <Select value={weather} onValueChange={(value) => { const next = value as Weather; setWeather(next); addActivity("You", `Brought in ${next}.`); }}>
+              <SelectTrigger aria-label="Choose weather"><SelectValue /></SelectTrigger>
+              <SelectContent>{WEATHER.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={glassMode} onValueChange={(value) => { const next = value as GlassMode; setGlassMode(next); addActivity("You", `Changed the glass to ${next}.`); }}>
+              <SelectTrigger aria-label="Choose glass"><SelectValue /></SelectTrigger>
+              <SelectContent>{GLASS_MODES.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <label className="clarity-control"><span>Clarity</span><Slider min={8} max={36} step={1} value={[glassOpacity]} onValueChange={(value) => setGlassOpacity(value[0])} aria-label="Adjust panel transparency" /><output>{glassOpacity}%</output></label>
+        </PanelFrame>
+
+        <PanelFrame {...panelProps("cards", "Bloom constellation", "cards-panel") }>
+          <div className="card-strip">
+            {BLOOM_CARDS.map((card) => {
+              const selected = card.id === selectedId;
+              const highlighted = highlights.includes(card.id);
+              return (
+                <button key={card.id} className={`spatial-card${selected ? " selected" : ""}${highlighted ? " highlighted" : ""}`} style={{ "--card-accent": card.accent } as React.CSSProperties} onClick={() => openCard(card.id)}>
+                  <span>{card.number}</span><strong>{card.title}</strong><small>{card.chapter}</small>
+                </button>
+              );
+            })}
+          </div>
+        </PanelFrame>
+
+        <PanelFrame {...panelProps("route", "Wonder Route", "route-panel") }>
+          {routeCards.length === 0 ? (
+            <div className="route-empty"><Route /><strong>Begin anywhere.</strong><span>Place a Bloom Card here.</span></div>
+          ) : (
+            <ol>{routeCards.map((card, index) => card && <li key={card.id} style={{ "--card-accent": card.accent } as React.CSSProperties}><span>{index + 1}</span><button onClick={() => openCard(card.id)}><strong>{card.title}</strong><small>{card.chapter}</small></button><Button variant="ghost" size="icon-xs" onClick={() => removeFromRoute(card.id)} aria-label={`Remove ${card.title}`}><X /></Button></li>)}</ol>
+          )}
+          <p>{route.length}/5 stops · held for this visit</p>
+        </PanelFrame>
+
+        <PanelFrame {...panelProps("activity", "Shared activity", "activity-panel") }>
+          <div className={`agent-state state-${toolState}`}><span />{toolState === "ready" ? "Six agent tools awake" : toolState === "preview" ? "Human room open" : toolState === "checking" ? "Opening…" : "Refresh agent tools"}</div>
+          <ul>{activity.map((item) => <li key={item.id}><span className={`activity-actor ${item.actor.toLowerCase()}`}>{item.actor === "Agent" ? <Bot /> : <UserRound />}</span><p><strong>{item.actor}</strong>{item.message}</p></li>)}</ul>
+        </PanelFrame>
       </div>
+
+      <nav className="bottom-dock glass-dock" aria-label="Workspace tools">
+        <Button variant="ghost" size="icon" onClick={() => togglePanel("cards")} title="Bloom Cards" aria-label="Toggle Bloom Cards"><Leaf /></Button>
+        <Button variant="ghost" size="icon" onClick={() => togglePanel("route")} title="Wonder Route" aria-label="Toggle Wonder Route"><FolderOpen /></Button>
+        <Button variant="ghost" size="icon" onClick={() => togglePanel("notes")} title="Compose note" aria-label="Toggle notes"><PenLine /></Button>
+        <Button variant="ghost" size="icon" onClick={() => togglePanel("activity")} title="Human and agent" aria-label="Toggle shared activity"><UsersRound /></Button>
+        <Button variant="ghost" size="icon" onClick={() => revealPanel("weather")} title="Glass settings" aria-label="Open glass settings"><Settings2 /></Button>
+      </nav>
+
+      <div className="room-status"><Move /> Drag any panel · arrangement saves here <span>•</span> <button onClick={resetRoom}><RotateCcw /> Reset room</button></div>
     </main>
   );
 }

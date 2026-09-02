@@ -6,11 +6,13 @@ Do not read this like a commercial. Speak slowly and naturally, as if you are sh
 
 Open on the full Glasshouse.
 
+Notice that this is not one webpage divided into boxes. Each clear panel is an object in the room, and I can move it without disturbing the world behind it.
+
 > This began with a question: what happens to a path when the tree it lived on is gone? I wanted a clear room where little pieces of a world could still find one another—and where an AI could help without taking the making away from me.
 
 ## 0:20–0:45 — Human action
 
-Open **Squirrels Without Trees**, then add it to the Wonder Route.
+Open **Squirrels Without Trees**, move the Bloom window slightly, then place the card on the Wonder Route.
 
 > These are Bloom Cards. I can open one, follow its thought, and place it on a route myself. Everything remains visible and changeable.
 
@@ -32,15 +34,15 @@ Ask the agent:
 
 Pause while the route visibly fills.
 
-> The agent’s route appears in the same place where I was working. I can open it, reorder it, remove something, or keep building. The activity stream shows which of us did what.
+> The agent’s route appears in the same place where I was working. I can open any stop, remove it, or keep building from what the agent began. The activity stream shows which of us did what.
 
 ## 1:50–2:15 — Weather and glass
 
 Ask:
 
-> Bring soft rain into the Glasshouse.
+> Set the glass to soft and bring rain into the Glasshouse.
 
-Then manually choose **starlight**, and return the glass to **clear**.
+Then manually choose **starlight**, and return the glass to **crystal**.
 
 > Even the weather is shared. The agent can set a mood, and I can answer it with my own choice—without losing the clear room behind the cards.
 

@@ -1,6 +1,6 @@
 # Transparent Glasshouse — WebMCP Edition
 
-Transparent Glasshouse is a shared creative surface for people and AI agents. A person can browse a public constellation of portrait Bloom Cards, open story prompts, choose the glass and living weather, and compose an ordered Wonder Route. An agent can perform the same meaningful actions through WebMCP, with every change reflected immediately in the same elegant conservatory.
+Transparent Glasshouse is a full-screen spatial workspace for people and AI agents. A person can move independent clear-glass panels across a living lake world, explore five public Bloom Cards, write notes, play a motion study, adjust the room’s weather and clarity, and compose an ordered Wonder Route. An agent can explore the same collection and shape the shared atmosphere through six WebMCP tools, with every action reflected in the visible room.
 
 **Live site:** [transparent-glasshouse-webmcp.cstolting.chatgpt.site](https://transparent-glasshouse-webmcp.cstolting.chatgpt.site)
 
@@ -41,16 +41,18 @@ npm run lint
 
 The tools register client-side after mount through `document.modelContext.registerTool`. Each tool uses a narrow JSON Schema, validates identifiers against the public card collection, returns concise text, and updates the same React state used by human controls. An `AbortController` unregisters tools when the page unmounts.
 
+Panel layout is saved locally by the human interface; WebMCP tools do not access or change that browser-only arrangement.
+
 Read-only discovery tools are marked with `readOnlyHint`. Composition and atmosphere tools are explicitly marked as state-changing. No tool uploads data, accesses accounts, crosses origins, or persists session content.
 
 ## Challenge demo path
 
-1. Open the clear redwood conservatory and show the five public portrait Bloom Cards.
-2. Manually add one card to demonstrate the human control surface.
+1. Open the lake world and show that each glass panel moves independently.
+2. Open **Squirrels Without Trees** and place it on the Wonder Route.
 3. Ask the agent to find cards about memory or home.
 4. Ask it to compose a three-stop Wonder Route.
-5. Ask it to bring in soft rain, then return the glass to clear.
-6. Show the shared activity stream containing both collaborators.
+5. Ask it to set the glass to soft and bring in rain.
+6. Manually return the glass to crystal, open the shared activity panel, and show both collaborators’ actions.
 
 ## Privacy
 
@@ -58,7 +60,8 @@ Read-only discovery tools are marked with `readOnlyHint`. Composition and atmosp
 - No analytics.
 - No upload.
 - No database.
-- Session-only state.
+- Panel positions, visibility, and clarity stay in this browser’s local storage.
+- Notes, routes, and activity remain session-only.
 
 ## License
 
