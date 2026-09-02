@@ -2,6 +2,8 @@
 
 Transparent Glasshouse is a shared creative surface for people and AI agents. A person can browse a public constellation of Bloom Cards, open story prompts, choose the atmosphere, and compose an ordered Wonder Route. An agent can perform the same meaningful actions through WebMCP, with every change reflected immediately in the same interface.
 
+**Live site:** [transparent-glasshouse-webmcp.cstolting.chatgpt.site](https://transparent-glasshouse-webmcp.cstolting.chatgpt.site)
+
 This repository is the public, challenge-safe edition. It contains no private account links, unpublished workflows, paid materials, credentials, or content from the private BloomPlatform project.
 
 ## Why WebMCP
