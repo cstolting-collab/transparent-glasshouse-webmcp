@@ -34,15 +34,15 @@ Pause while the route visibly fills.
 
 > The agent’s route appears in the same place where I was working. I can open it, reorder it, remove something, or keep building. The activity stream shows which of us did what.
 
-## 1:50–2:15 — Atmosphere
+## 1:50–2:15 — Weather and glass
 
 Ask:
 
-> Set the Glasshouse to neon mode.
+> Bring soft rain into the Glasshouse.
 
-Then manually choose **dim** and return to **aurora**.
+Then manually choose **starlight**, and return the glass to **clear**.
 
-> Even the atmosphere is shared. The agent can set a mood, and I can answer it with my own choice.
+> Even the weather is shared. The agent can set a mood, and I can answer it with my own choice—without losing the clear room behind the cards.
 
 ## 2:15–2:35 — Close
 
