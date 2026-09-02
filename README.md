@@ -21,7 +21,7 @@ The person and agent work on one live surface. Human actions and agent actions a
 Requirements: Node.js 22.13 or newer.
 
 ```bash
-npm run install:ci
+npm install
 npm run dev
 ```
 
