@@ -2,7 +2,13 @@
 
 Transparent Glasshouse is a full-screen spatial workspace for people and AI agents. A person can move independent clear-glass panels across a living lake world, explore five public Bloom Cards, write notes, play a motion study, adjust the room’s weather and clarity, and compose an ordered Wonder Route. An agent can explore the same collection and shape the shared atmosphere through six WebMCP tools, with every action reflected in the visible room.
 
-**Live site:** [transparent-glasshouse-webmcp.cstolting.chatgpt.site](https://transparent-glasshouse-webmcp.cstolting.chatgpt.site)
+**Hosted preview:** [transparent-glasshouse-webmcp.cstolting.chatgpt.site](https://transparent-glasshouse-webmcp.cstolting.chatgpt.site/)
+
+The hosted version currently requires ChatGPT sign-in and permission to access. The public source can run locally without a ChatGPT account; see [Run locally](#run-locally).
+
+![Saved Transparent Glasshouse preview showing the shared room and its controls](https://raw.githubusercontent.com/cstolting-collab/CML-GitHub-Work-Record/main/assets/glasshouse-preview.png)
+
+*Saved preview of the hosted interface. Agent tools require a compatible WebMCP browser.*
 
 This repository is the public, challenge-safe edition. It contains no private account links, unpublished workflows, paid materials, credentials, or content from the private BloomPlatform project.
 
@@ -56,7 +62,7 @@ Read-only discovery tools are marked with `readOnlyHint`. Composition and atmosp
 
 ## Privacy
 
-- No sign-in.
+- The local source demo requires no sign-in. The hosted version uses ChatGPT access controls.
 - No analytics.
 - No upload.
 - No database.
